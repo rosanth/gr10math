@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Inequality Grapher</title>
+  <script src="https://cdn.geogebra.org/apps/deployggb.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+  <div class="max-w-5xl mx-auto p-6">
+    <h1 class="text-3xl font-bold text-center mb-6">நிறம் தீட்டப்பட்ட பிரதேசத்திற்குரிய சமனிலியினை கண்டறிதல்</h1>
+
+    <!-- Input card -->
+    <div class="bg-white shadow-xl rounded-2xl p-6 mb-6">
+      <!-- 1 -->
+      <h2 class="text-xl font-semibold mb-2">1. இரண்டு ஆள்கூறுகளை உள்ளிடுக</h2>
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-sm">ஆள்கூறு 1 (x₁, y₁)</label>
+          <input id="x1" type="number"  class="w-full p-2 border rounded-lg" placeholder="x₁ உள்ளிடுக">
+          <input id="y1" type="number"  class="w-full p-2 border rounded-lg mt-1" placeholder="y₁ உள்ளிடுக">
+        </div>
+        <div>
+          <label class="block text-sm">ஆள்கூறு 2 (x₂, y₂)</label>
+          <input id="x2" type="number"  class="w-full p-2 border rounded-lg" placeholder="x₂ உள்ளிடுக">
+          <input id="y2" type="number"  class="w-full p-2 border rounded-lg mt-1" placeholder="y₂ உள்ளிடுக">
+        </div>
+      </div>
+
+      <!-- 2 & 3 will be filled dynamically -->
+      <div id="calc" class="space-y-4 mb-4"></div>
+
+      <!-- 4 -->
+      <h2 class="text-xl font-semibold mb-2">4. நேர்கொடா புள்ளிக்கோடா என தீர்மானித்தல்</h2>
+      	<select id="lineStyle" class="w-full p-2 border rounded-lg mb-4">
+  	<option value="" selected disabled hidden>— தேர்வு செய்யவும் —</option>
+  	<option value="solid">நேர்கோடு (≥ or ≤)</option>
+  	<option value="dashed">புள்ளிக்கோடு (> or <)</option>
+	</select>
+
+
+      <!-- 5 -->
+      <h2 class="text-xl font-semibold mb-2">5. நிறம் தீட்டப்பட்ட பிரதேசம் </h2>
+      <select id="shade" class="w-full p-2 border rounded-lg mb-4">
+	<option value="" selected disabled hidden>— தேர்வு செய்யவும் —</option>
+        <option value="above">கோட்டின் மேற்புறம்</option>
+        <option value="below">கோட்டின் கீழப்புறம்</option>
+      </select>
+
+      <!-- 6 -->
+	<div id="calc1" class="space-y-4 mb-4"></div>
+      <button onclick="drawLine()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-semibold">
+        சமனிலியினை வரைக
+      </button>
+    </div>
+
+    <!-- Graph container -->
+    <div class="mt-6 border rounded-2xl overflow-hidden shadow-lg">
+      <div class="w-full aspect-video" id="ggb-element"></div>
+    </div>
+
+    <!-- Test Point -->
+    <div class="bg-white shadow-xl rounded-2xl p-6 mt-6">
+      <h2 class="text-xl font-semibold mb-2">7. ஆள்கூறு சமனிலியினை திருப்தி செய்கிறதா?</h2>
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-sm">ஆள்கூறு (x, y)</label>
+          <input id="px" type="number" value="0" class="w-full p-2 border rounded-lg">
+          <input id="py" type="number" value="0" class="w-full p-2 border rounded-lg mt-1">
+        </div>
+      </div>
+      <button onclick="checkPoint()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-semibold">
+        Check
+      </button>
+      <div id="pointResult" class="mt-4 text-gray-800"></div>
+    </div>
+  </div>
+
+  <script>
+    let ggb;
+    let currentEqn = "";
+
+    var ggbApp = new GGBApplet({
+      appName: "graphing",
+      width: 900,
+      height: 500,
+      showToolBar: false,
+      showAlgebraInput: false,
+      showMenuBar: false,
+      appletOnLoad: function(api) {
+        ggb = api;
+      }
+    }, true);
+
+    window.addEventListener("load", function() {
+      ggbApp.inject('ggb-element');
+    });
+
+function drawLine() {
+  if (!ggb) {
+    alert("GeoGebra not loaded yet.");
+    return;
+  }
+
+  const x1 = document.getElementById("x1").value;
+  const y1 = document.getElementById("y1").value;
+  const x2 = document.getElementById("x2").value;
+  const y2 = document.getElementById("y2").value;
+  const lineStyle = document.getElementById("lineStyle").value;
+  const shade = document.getElementById("shade").value;
+
+  // Validation
+  if (x1 === "" || y1 === "" || x2 === "" || y2 === "") {
+    alert("தயவுசெய்து அனைத்து ஆள்கூறுகளையும் உள்ளிடுக (x₁, y₁, x₂, y₂).");
+    return;
+  }
+  if (lineStyle === "") {
+    alert("கோட்டின் வகையை (நேர்கோடு / புள்ளிக்கோடு) தேர்வு செய்யவும்.");
+    return;
+  }
+  if (shade === "") {
+    alert("நிறம் தீட்டப்பட்ட பிரதேசத்தை (மேல் / கீழ்) தேர்வு செய்யவும்.");
+    return;
+  }
+
+  const x1n = parseFloat(x1);
+  const y1n = parseFloat(y1);
+  const x2n = parseFloat(x2);
+  const y2n = parseFloat(y2);
+
+  if (isNaN(x1n) || isNaN(y1n) || isNaN(x2n) || isNaN(y2n)) {
+    alert("எண்களை மட்டும் உள்ளிடுக.");
+    return;
+  }
+
+  if (x1n === x2n && y1n === y2n) {
+    alert("இரண்டு வேறு புள்ளிகளை தேர்வு செய்யவும்.");
+    return;
+  }
+
+  // --- your existing slope & equation code below ---
+  let m, c;
+  if (x1n === x2n) {
+    m = "undefined";
+    c = x1n;
+  } else {
+    m = (y2n - y1n) / (x2n - x1n);
+    c = y1n - m * x1n;
+  }
+
+  ggb.reset();
+
+  let eqn;
+  if (m === "undefined") {
+    if (lineStyle === "solid" && shade === "above") eqn = `x >= ${c}`;
+    if (lineStyle === "solid" && shade === "below") eqn = `x <= ${c}`;
+    if (lineStyle === "dashed" && shade === "above") eqn = `x > ${c}`;
+    if (lineStyle === "dashed" && shade === "below") eqn = `x < ${c}`;
+  } else {
+    if (lineStyle === "solid" && shade === "above") eqn = `y >= ${m}*x + ${c}`;
+    if (lineStyle === "solid" && shade === "below") eqn = `y <= ${m}*x + ${c}`;
+    if (lineStyle === "dashed" && shade === "above") eqn = `y > ${m}*x + ${c}`;
+    if (lineStyle === "dashed" && shade === "below") eqn = `y < ${m}*x + ${c}`;
+  }
+
+  currentEqn = eqn;
+  ggb.evalCommand(eqn);
+
+  // update steps
+  document.getElementById("calc").innerHTML = `
+    <div class="bg-white shadow-md rounded-xl p-4">
+      <h3 class="font-semibold text-lg mb-2">2. படித்திறன் காணுதல் (m)</h3>
+      <p>m = (y₂ - y₁) / (x₂ - x₁)</p>
+      <p>Substitute: m = (${y2n} - ${y1n}) / (${x2n} - ${x1n})</p>
+      <p>Result: m = ${m}</p>
+    </div>
+    <div class="bg-white shadow-md rounded-xl p-4">
+      <h3 class="font-semibold text-lg mb-2">3. வெட்டுதுண்டு காணுதல் (c)</h3>
+      <p>c = y₁ - m × x₁</p>
+      <p>Substitute: c = ${y1n} - (${m} × ${x1n})</p>
+      <p>Result: c = ${c}</p>
+    </div>
+  `;
+
+  document.getElementById("calc1").innerHTML = `
+    <div>
+      <h3 class="text-xl font-semibold mb-2">6. சமனிலியினை எழுதுதல்</h3>
+      <p><b>${eqn}</b></p>
+    </div>
+  `;
+}
+
+    function checkPoint() {
+      if (!currentEqn) {
+        alert("Please draw an inequality first.");
+        return;
+      }
+      const px = parseFloat(document.getElementById("px").value);
+      const py = parseFloat(document.getElementById("py").value);
+
+      ggb.evalCommand(`P=(${px},${py})`);
+
+      let result;
+      if (currentEqn.startsWith("x")) {
+        const parts = currentEqn.split(" ");
+        const sign = parts[1];
+        const val = parseFloat(parts[2]);
+        if (sign === ">") result = px > val;
+        if (sign === ">=") result = px >= val;
+        if (sign === "<") result = px < val;
+        if (sign === "<=") result = px <= val;
+      } else {
+        const parts = currentEqn.split(" ");
+        const sign = parts[1];
+        const rhs = eval(parts.slice(2).join(" ").replace(/x/g, `(${px})`));
+        if (sign === ">") result = py > rhs;
+        if (sign === ">=") result = py >= rhs;
+        if (sign === "<") result = py < rhs;
+        if (sign === "<=") result = py <= rhs;
+      }
+
+      document.getElementById("pointResult").innerHTML = `
+        <div class="bg-white shadow-md rounded-xl p-4">
+          
+          <p>Point P(${px}, ${py}) → 
+            ${result ? 
+              "<span class='text-green-600 font-bold'>திருப்தி ✅</span>" : 
+              "<span class='text-red-600 font-bold'>திருப்தி அளிக்கவில்லை ❌</span>"}
+          </p>
+        </div>
+      `;
+    }
+  </script>
+
+</body>
+</html>
